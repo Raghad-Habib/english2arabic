@@ -1,0 +1,52 @@
+version: "3.7"
+
+services:
+  api:
+    image: api
+    container_name: api
+    build: 
+      context: ./api
+    command: node index.js
+    environment:
+      - CONNECTION_STRING=postgres://postgres:postgres@db/postgres_db
+    depends_on:
+      - db
+    networks:
+      - public-network
+      - private-network
+
+  web:
+    image: web
+    container_name: web
+    build: 
+      context: ./web
+    command: node index.js
+    environment:
+      - API_URL=http://api:3001/data
+    volumes: 
+      - ./web:/app
+    depends_on:
+      - api
+    ports:
+      - "80:3000"
+    networks:
+      - public-network
+
+  db:
+    image: postgres:11.2-alpine
+    container_name: db
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_DB: "postgres_db"
+    volumes:
+      - "/home/ubuntu/english2arabic/sql_scripts/:/docker-entrypoint-initdb.d"
+    ports: ["5432"]
+    networks:
+      - private-network
+
+networks:
+  public-network:
+      driver: bridge
+  private-network:
+      driver: bridge
